@@ -1,9 +1,65 @@
-import { Hono } from 'hono'
+import { Hono } from "hono";
+import { verifyKey } from "discord-interactions";
+import {
+  APIInteraction,
+  APIInteractionResponse,
+  InteractionResponseType,
+  InteractionType,
+} from "discord-api-types/v10";
+import commands from "./commands";
 
-const app = new Hono()
+const app = new Hono<{
+  Bindings: {
+    DISCORD_TOKEN: string;
+    DISCORD_APPLICATION_ID: string;
+    DISCORD_PUBLIC_KEY: string;
+  };
+}>();
 
-app.get('/', (c) => {
-  return c.text('Hello Hono!')
-})
+app.get("/", (c) => {
+  return new Response(
+    `👋 ${c.env.DISCORD_APPLICATION_ID} use this endpoint to keep bot alive.`,
+  );
+});
 
-export default app
+app.post("/", async (c) => {
+  const signature = c.req.header("x-signature-ed25519");
+  const timestamp = c.req.header("x-signature-timestamp");
+
+  if (!signature || !timestamp) {
+    return c.text("Bad request signature.", 401);
+  }
+
+  const body = await c.req.arrayBuffer();
+  const isValidRequest = verifyKey(
+    body,
+    signature,
+    timestamp,
+    c.env.DISCORD_PUBLIC_KEY,
+  );
+
+  if (!isValidRequest) {
+    return c.text("Bad request signature.", 401);
+  }
+
+  const interaction: APIInteraction = await c.req.json();
+
+  if (interaction.type === InteractionType.Ping) {
+    return c.json({
+      type: InteractionResponseType.Pong,
+    });
+  }
+
+  if (interaction.type === InteractionType.MessageComponent) {
+    return c.json({
+      type: InteractionResponseType.ChannelMessageWithSource,
+      data: {
+        content: "pong",
+      },
+    });
+  }
+
+  return c.text("Unknown interaction type.", 400);
+});
+
+export default app;
