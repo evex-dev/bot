@@ -1,2 +1,8 @@
-# bot
-Evex Helper Bot
+```
+npm install
+npm run dev
+```
+
+```
+npm run deploy
+```
