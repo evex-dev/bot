@@ -15,9 +15,7 @@ const app = new Hono<{
 }>();
 
 app.get("/", (c) => {
-  return new Response(
-    `👋 ${c.env.DISCORD_APPLICATION_ID} use this endpoint to keep bot alive.`,
-  );
+  return c.body(null, 204);
 });
 
 app.post("/", async (c) => {
