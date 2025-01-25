@@ -2,11 +2,9 @@ import { Hono } from "hono";
 import { verifyKey } from "discord-interactions";
 import {
   APIInteraction,
-  APIInteractionResponse,
   InteractionResponseType,
   InteractionType,
 } from "discord-api-types/v10";
-import commands from "./commands";
 
 const app = new Hono<{
   Bindings: {
